@@ -1,1 +1,27 @@
 @import './base.css';
+
+.el-message {
+  position: fixed;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  user-select: none;
+  align-items: center;
+  padding: 0.7rem;
+  gap: 0.5rem;
+  border-radius: 0.3rem;
+}
+
+.el-message--error {
+  background-color: var(--color-danger);
+}
+.el-message--success {
+  background-color: var(--color-success);
+}
+.el-message--warning {
+  background-color: var(--color-warning);
+}
+.el-message--info {
+  background-color: var(--color-info);
+}

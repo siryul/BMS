@@ -1,15 +1,20 @@
-import axios from 'axios'
+import axios, { type AxiosError, type AxiosResponse } from 'axios'
+import { ElMessage } from 'element-plus'
 
 const ins = axios.create({
   timeout: 15000,
 })
 
 ins.interceptors.response.use(
-  res => {
+  (res: AxiosResponse) => {
     return res.data
   },
-  err => {
-    return Promise.reject(err)
+  (err: AxiosError) => {
+    ElMessage({
+      message: err.message,
+      type: 'error',
+    })
+    return Promise.reject(err.message)
   },
 )
 

@@ -1,26 +1,19 @@
 <script lang="ts" setup>
 import { ElementPlus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { generate } from '@/api/chat'
+import { generateWithFetch } from '@/api/chat'
 import { ROLE, type IMessage } from '@/types/index'
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import ChatItem from '@/components/ChatItem.vue'
 import { storeToRefs } from 'pinia'
 import { useModelsStore } from '@/stores/models'
-
-interface IMssageList extends IMessage {
-  time: string
-}
+import { useFetchMessage } from './useParseMessage'
 
 // 用户输入的消息
 const message = ref('')
 
 // 消息列表
-const messageList = ref<IMssageList[]>([])
-
-// 定义对 DOM 元素的引用，用于获取 home 和 inputer 元素
-const homeRef = ref<HTMLElement | null>(null)
-const inputerRef = ref<HTMLElement | null>(null)
+const messageList = ref<IMessage[]>([])
 
 const modelsStore = useModelsStore()
 const { currentModels } = storeToRefs(modelsStore)
@@ -60,45 +53,34 @@ async function sendMessage(e: KeyboardEvent) {
   messageList.value.push({
     role: ROLE.USER,
     content: msg,
-    time: Date.now().toString(),
+    // time: Date.now().toString(),
   })
 
-  // 调用生成函数获取响应，并将响应添加到消息列表中
-  const data = await generate(msg, currentModels.value.name.split(':')[0])
-  messageList.value.push({
-    role: ROLE.ASSISTANT,
-    content: data.response,
-    time: data.created_at,
-  })
-}
+  try {
+    const reader = await generateWithFetch(
+      msg,
+      currentModels.value.name.split(':')[0],
+    )
 
-/**
- * 设置输入框的位置和宽度
- */
-const setPosition = () => {
-  if (inputerRef.value && homeRef.value) {
-    const width = homeRef.value.clientWidth
-    inputerRef.value.style.width = width * 0.7 + 'px'
-    inputerRef.value.style.right = width / 2 + 'px'
+    messageList.value.push({
+      role: ROLE.ASSISTANT,
+      content: '',
+    })
+    useFetchMessage(messageList.value.at(-1)!, reader)
+  } catch (error) {
+    ElMessage({ message: (error as any).message })
   }
 }
-
-// 组件挂载时，设置输入框位置并监听窗口大小变化
-onMounted(() => {
-  setPosition()
-
-  window.addEventListener('resize', setPosition)
-})
 </script>
 
 <template>
-  <div class="home-container" ref="homeRef">
+  <div class="home-container">
     <ul class="msg-container">
-      <li v-for="m of messageList" :key="m.time">
+      <li v-for="(m, i) in messageList" :key="i">
         <ChatItem :role="m.role" :content="m.content" />
       </li>
     </ul>
-    <div class="input-container" ref="inputerRef">
+    <div class="input-container">
       <input
         v-model="message"
         type="text"
@@ -112,17 +94,27 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .home-container {
+  padding: 1.5rem;
   height: 100%;
   width: 100%;
-  position: relative;
-  padding-bottom: 60px;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+.msg-container {
+  flex: 1;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    visibility: hidden;
+  }
 }
 
 .input-container {
-  position: fixed;
   bottom: 2rem;
   height: 40px;
-  transform: translateX(50%);
   outline: 1px solid var(--color-border-base);
   border-radius: 0.5rem;
   display: flex;

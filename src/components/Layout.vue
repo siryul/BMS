@@ -31,4 +31,9 @@
 .el-header {
   padding: 0;
 }
+
+.el-main {
+  padding: 0;
+  position: relative;
+}
 </style>

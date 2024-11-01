@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ROLE } from '@/types'
+import { marked } from 'marked'
 
 defineProps({
   role: {
@@ -20,9 +21,7 @@ defineProps({
         {{ role }}
       </el-avatar>
     </div>
-    <div class="content">
-      {{ content }}
-    </div>
+    <div class="content" v-html="marked.parse(content || '')"></div>
   </div>
 </template>
 

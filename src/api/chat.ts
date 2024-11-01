@@ -7,7 +7,6 @@ import type {
   IResponse,
 } from '@/types'
 import request from '@/utils/request'
-import type { AxiosError } from 'axios'
 
 /**
  * 列出本地模型
@@ -30,6 +29,22 @@ export const generate = async (
   stream = false,
 ): Promise<IResponse> => {
   return request.post('/api/generate', { prompt, model, stream })
+}
+
+export const generateWithFetch = async (
+  prompt: string,
+  model: string,
+  stream = false,
+): Promise<ReadableStreamDefaultReader<Uint8Array> | undefined> => {
+  const resp = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, model, stream }),
+  })
+  if (!resp.ok) {
+    throw new Error('请求失败，' + resp.statusText)
+  }
+  return resp.body!.getReader()
 }
 
 /**
