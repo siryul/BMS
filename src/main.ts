@@ -1,5 +1,5 @@
 import './assets/main.css'
-
+import 'highlight.js/styles/github.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 

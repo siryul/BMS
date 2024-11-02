@@ -65,3 +65,8 @@ export interface IPResponse {
 export interface IPullResponse extends IPResponse {
   completed?: number
 }
+
+export interface IChat {
+  id: string
+  chat: IMessage[]
+}

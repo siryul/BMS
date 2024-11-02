@@ -2,21 +2,41 @@
 import { ElementPlus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { generateWithFetch } from '@/api/chat'
-import { ROLE, type IMessage } from '@/types/index'
-import { ref } from 'vue'
+import { ROLE, type IChat } from '@/types/index'
+import { ref, watch } from 'vue'
 import ChatItem from '@/components/ChatItem.vue'
 import { storeToRefs } from 'pinia'
 import { useModelsStore } from '@/stores/models'
 import { useFetchMessage } from './useParseMessage'
+import { useSaveHistory } from './useSaveHistory'
+import { useChatStore } from '@/stores/chat'
+import { useRoute } from 'vue-router'
 
 // 用户输入的消息
 const message = ref('')
+const msgContainerRef = ref<HTMLElement>()
+
+const chatStore = useChatStore()
+
+const { currentChat } = storeToRefs(chatStore)
 
 // 消息列表
-const messageList = ref<IMessage[]>([])
+const messageList = ref<IChat>(currentChat.value)
 
 const modelsStore = useModelsStore()
 const { currentModels } = storeToRefs(modelsStore)
+const route = useRoute()
+
+watch(
+  () => route.params.id,
+  () => {
+    messageList.value = currentChat.value
+  },
+)
+
+watch(messageList.value, () => {
+  useSaveHistory(messageList.value)
+})
 
 /**
  * 处理发送消息的逻辑
@@ -50,11 +70,12 @@ async function sendMessage(e: KeyboardEvent) {
   message.value = ''
 
   // 将用户消息添加到消息列表中
-  messageList.value.push({
+  messageList.value.chat.push({
     role: ROLE.USER,
     content: msg,
     // time: Date.now().toString(),
   })
+  // currentChatList.value.push()
 
   try {
     const reader = await generateWithFetch(
@@ -62,11 +83,11 @@ async function sendMessage(e: KeyboardEvent) {
       currentModels.value.name.split(':')[0],
     )
 
-    messageList.value.push({
+    messageList.value.chat.push({
       role: ROLE.ASSISTANT,
       content: '',
     })
-    useFetchMessage(messageList.value.at(-1)!, reader)
+    useFetchMessage(messageList.value.chat.at(-1)!, reader)
   } catch (error) {
     ElMessage({ message: (error as any).message })
   }
@@ -75,8 +96,8 @@ async function sendMessage(e: KeyboardEvent) {
 
 <template>
   <div class="home-container">
-    <ul class="msg-container">
-      <li v-for="(m, i) in messageList" :key="i">
+    <ul class="msg-container" ref="msgContainerRef">
+      <li v-for="(m, i) in messageList.chat" :key="i">
         <ChatItem :role="m.role" :content="m.content" />
       </li>
     </ul>
@@ -97,7 +118,6 @@ async function sendMessage(e: KeyboardEvent) {
   padding: 1.5rem;
   height: 100%;
   width: 100%;
-  max-width: 800px;
   display: flex;
   flex-direction: column;
   margin: 0 auto;
@@ -106,6 +126,7 @@ async function sendMessage(e: KeyboardEvent) {
 .msg-container {
   flex: 1;
   overflow-y: auto;
+  padding: 1rem 0;
 
   &::-webkit-scrollbar {
     visibility: hidden;

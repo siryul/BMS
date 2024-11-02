@@ -34,7 +34,7 @@ export const generate = async (
 export const generateWithFetch = async (
   prompt: string,
   model: string,
-  stream = false,
+  stream = true,
 ): Promise<ReadableStreamDefaultReader<Uint8Array> | undefined> => {
   const resp = await fetch('/api/generate', {
     method: 'POST',

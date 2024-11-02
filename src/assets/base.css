@@ -26,10 +26,6 @@ a {
   color: inherit;
 }
 
-li {
-  list-style: none;
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --color-primary: rgb(51.2, 126.4, 204);
